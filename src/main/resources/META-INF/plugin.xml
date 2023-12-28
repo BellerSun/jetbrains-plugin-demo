@@ -59,6 +59,14 @@
             >
             </action>
 
+            <action id="com.test.MyActionInputDialog"
+                    icon="MyIcons.logo"
+                    text="InputDialog"
+                    class="com.example.demo.actions.MyActionInputDialog"
+                    popup="true"
+            >
+            </action>
+
             <add-to-group group-id="EditorPopupMenu3" anchor="last"/>
         </group>
     </actions>
