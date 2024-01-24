@@ -30,8 +30,8 @@
     <actions>
         <group id="com.test.baseGroup"
                class="com.example.demo.actions.MyActionGroupA"
-               icon="MyIcons.logo"
-               text="MyGroup"
+               icon="MyIcons.logoPng"
+               text="TestGroup"
                popup="true"
         >
             <action id="com.test.baseGroupAction1"
@@ -63,6 +63,14 @@
                     icon="MyIcons.logo"
                     text="InputDialog"
                     class="com.example.demo.actions.MyActionInputDialog"
+                    popup="true"
+            >
+            </action>
+
+            <action id="com.test.MyActionLookPath"
+                    icon="MyIcons.logo"
+                    text="打印当前Path"
+                    class="com.example.demo.actions.MyActionLookPath"
                     popup="true"
             >
             </action>
