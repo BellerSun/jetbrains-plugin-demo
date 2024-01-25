@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "com.example"
-version = "2.2.2"
+version = "2.2.7"
 
 repositories {
     mavenCentral()
@@ -20,6 +20,10 @@ intellij {
     plugins.set(listOf(/* Plugin Dependencies */))
 }
 
+dependencies {
+    implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
+}
+
 tasks {
     // Set the JVM compatibility versions
     withType<JavaCompile> {
@@ -32,7 +36,7 @@ tasks {
 
     patchPluginXml {
         sinceBuild.set("222")
-        untilBuild.set("232.*")
+        untilBuild.set("235.*")
     }
 
     signPlugin {
