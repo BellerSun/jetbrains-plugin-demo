@@ -19,7 +19,7 @@ public class MyDebuggerFilter implements JvmExceptionOccurrenceFilter {
     }
 
     @Override
-    public CreateExceptionBreakpointResult applyFilter(@NotNull String exceptionClassName, @NotNull List<PsiClass> classes, int exceptionStartOffset) {
+    public Filter.Result applyFilter(@NotNull String exceptionClassName, @NotNull List<PsiClass> classes, int exceptionStartOffset) {
         return new CreateExceptionBreakpointResult(exceptionStartOffset, exceptionStartOffset + exceptionClassName.length(), exceptionClassName, ((PsiClass) classes.get(0)).getProject());
     }
 
