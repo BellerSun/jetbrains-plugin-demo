@@ -31,6 +31,9 @@ sourceSets {
 
 dependencies {
     implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
+    // https://mvnrepository.com/artifact/cn.hutool/hutool-all
+    implementation("cn.hutool:hutool-all:5.8.25")
+
 }
 
 tasks {
