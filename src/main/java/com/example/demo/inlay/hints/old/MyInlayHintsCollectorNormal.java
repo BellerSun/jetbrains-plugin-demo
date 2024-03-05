@@ -4,6 +4,7 @@ import com.intellij.codeInsight.hints.InlayHintsCollector;
 import com.intellij.codeInsight.hints.InlayHintsSink;
 import com.intellij.codeInsight.hints.InlayPresentationFactory;
 import com.intellij.codeInsight.hints.presentation.InlayPresentation;
+import com.intellij.codeInsight.hints.presentation.InsetPresentation;
 import com.intellij.codeInsight.hints.presentation.PresentationFactory;
 import com.intellij.codeInsight.hints.presentation.SequencePresentation;
 import com.intellij.icons.AllIcons;
@@ -64,7 +65,7 @@ public class MyInlayHintsCollectorNormal implements InlayHintsCollector {
         int leftPadding = calculateLeftPadding(method);
 
 
-        final List<String> showActions = Arrays.asList("bug修复", "注释生成", "代码解释");
+        final List<String> showActions = Arrays.asList("bug修复", "注释生成", "代码解释", "文案33333");
 
         final List<InlayPresentation> presentations = new SmartList<>();
         // 左边空格
@@ -73,18 +74,39 @@ public class MyInlayHintsCollectorNormal implements InlayHintsCollector {
             String showAction = showActions.get(i);
             // 1.行为图标/文本
             //      1.1.展示内容
-            final InlayPresentation actionTextPresent = factory.text(showAction);
+            final InlayPresentation base = switch (i) {
+                case 0 ->
+                        //          1.1.1 可折叠和展开效果
+                        factory.collapsible(factory.text("")
+                                , factory.text(showAction.substring(0, 3) + "...")
+                                , () -> factory.text(showAction)
+                                , factory.icon(AllIcons.Actions.FindAndShowNextMatchesSmall)
+                                , true);
+                case 1 ->
+                        //          1.1.2 可展开效果
+                        factory.folding(factory.text(showAction.substring(0, 3) + "..."), () -> factory.text(showAction));
+                case 2 ->
+                        //          1.1.3 文本拼接
+                        factory.join(Arrays.asList(factory.text("a"), factory.text(showAction), factory.text("b")), () -> factory.text("|"));
+                default ->
+                        //          1.1.4 鼠标悬停效果
+                        factory.changeOnHover(factory.text(showAction), () -> factory.text(showAction), mouseEvent -> true);
+            };
+            //          添加空白的边距
+            final InsetPresentation inset = factory.inset(base, 0, 0, 0, 0);
+
+
             //      1.2.点击效果
             InlayPresentationFactory.ClickListener clickListener = (mouseEvent, point) -> {
                 TextRange range = method.getTextRange();
                 editor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
-                System.out.println("click showAction:" + showAction);
+                System.out.println("click showAction:" + showAction + "\tmethod:" + method.getName() + "\tline:" + editor.getDocument().getLineNumber(method.getTextOffset()));
             };
-            final InlayPresentation clickTextPresent = factory.referenceOnHover(actionTextPresent, clickListener);
+            final InlayPresentation clickTextPresent = factory.referenceOnHover(inset, clickListener);
             presentations.add(clickTextPresent);
 
             // 2.分隔符(最后一个不添加)
-            if (i != showActions.size() - 1){
+            if (i != showActions.size() - 1) {
                 presentations.add(factory.text(" | "));
             }
         }
