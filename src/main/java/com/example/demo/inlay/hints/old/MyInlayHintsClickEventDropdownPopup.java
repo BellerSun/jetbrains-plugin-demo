@@ -6,6 +6,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,7 +18,7 @@ import java.util.List;
 
 public class MyInlayHintsClickEventDropdownPopup implements MyInlayHintsClickEvent{
     @Override
-    public void click(@NotNull MouseEvent mouseEvent, @NotNull Point point, Editor editor, PsiMethod method) {
+    public void click(@NotNull MouseEvent mouseEvent, @NotNull Point point, Editor editor, PsiElement method) {
 
         System.out.println("click:" + "smallText" + "\tX:" + point.getX() + "\tY:" + point.getY() + "\tLY:" + point.getLocation().getX() + "\tY:" + point.getLocation().getY());
 

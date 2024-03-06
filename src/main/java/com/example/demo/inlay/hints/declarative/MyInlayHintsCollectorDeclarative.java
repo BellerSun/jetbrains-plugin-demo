@@ -4,7 +4,10 @@ import com.intellij.codeInsight.hints.declarative.*;
 import com.intellij.codeInsight.hints.declarative.impl.PresentationTreeBuilderImpl;
 import com.intellij.codeInsight.hints.declarative.impl.util.TinyTree;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiTreeUtil;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
@@ -21,14 +24,15 @@ public class MyInlayHintsCollectorDeclarative implements SharedBypassCollector {
         this.editor = editor;
         this.psiFile = psiFile;
     }
+
     @SuppressWarnings("all")
     @Override
     public void collectFromElement(@NotNull PsiElement psiElement, @NotNull InlayTreeSink inlayTreeSink) {
-        PsiMethod[] methods = PsiTreeUtil.getChildrenOfType(psiElement, PsiMethod.class);
+        PsiElement[] methods = PsiTreeUtil.getChildrenOfType(psiElement, PsiElement.class);
         SmartPsiElementPointer<PsiElement> pointer = SmartPointerManager.getInstance(psiElement.getProject()).createSmartPsiElementPointer(psiElement);
 
         if (methods != null) {
-            for (PsiMethod method : methods) {
+            for (PsiElement method : methods) {
                 int textOffset = method.getTextOffset();
 
                 InlineInlayPosition inlayPosition = new InlineInlayPosition(textOffset, true, 0);
@@ -66,8 +70,8 @@ public class MyInlayHintsCollectorDeclarative implements SharedBypassCollector {
                             if (dataPayload instanceof InlayActionData) {
                                 InlayActionData pl = (InlayActionData) dataPayload;
                                 InlayActionPayload payload = pl.getPayload();
-                                if (payload instanceof PsiPointerInlayActionPayload){
-                                    PsiPointerInlayActionPayload psiPl= (PsiPointerInlayActionPayload)payload;
+                                if (payload instanceof PsiPointerInlayActionPayload) {
+                                    PsiPointerInlayActionPayload psiPl = (PsiPointerInlayActionPayload) payload;
                                     PsiElement element = psiPl.getPointer().getElement();
                                     System.out.println("");
                                 }

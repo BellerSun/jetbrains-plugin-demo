@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-
+@SuppressWarnings("UnstableApiUsage")
 public class MyInlayHintsProviderNormal implements InlayHintsProvider<MyInlayHintsProviderNormal.Settings> {
 
 

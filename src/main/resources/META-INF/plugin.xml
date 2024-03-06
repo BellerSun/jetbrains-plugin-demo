@@ -26,18 +26,20 @@
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
     <extensions defaultExtensionNs="com.intellij">
         <jvm.exceptionFilter implementation="com.example.demo.filter.MyDebuggerFilter" order="first"/>
-        <codeInsight.declarativeInlayProvider group="settings.hints.group.code.author"
+<!--        <codeInsight.declarativeInlayProvider group="settings.hints.group.code.author"
                                               language="JAVA"
                                               isEnabledByDefault="true"
                                               implementationClass="com.example.demo.inlay.hints.declarative.MyInlayHintsProviderDeclarative"
                                               bundle="MyBundle"
                                               nameKey="SUNYC-nameKey"
-                                              providerId="SUNYC-providerId"/>
-        <codeInsight.inlayProvider implementationClass="com.example.demo.inlay.hints.old.MyInlayHintsProviderNormal"
-                                   language="JAVA"/>
+                                              providerId="SUNYC-providerId"/>-->
+        <!--        <codeInsight.inlayProvider implementationClass="com.example.demo.inlay.hints.old.MyInlayHintsProviderNormal"
+                                           language="JAVA"/>-->
+        <codeInsight.inlayProviderFactory
+                implementation="com.example.demo.inlay.hints.factory.MyInlayHintsProviderFactory"/>
         <codeInsight.inlayProvider implementationClass="com.example.demo.inlay.hints.left.MyInlayHintsProviderLeft"
                                    language="JAVA"/>
-        <!--  <codeInsight.lineMarkerProvider implementationClass="com.example.demo.marks.MyLineMarkerProvider"/>-->
+        <codeInsight.lineMarkerProvider implementationClass="com.example.demo.marks.MyLineMarkerProvider"/>
     </extensions>
     <actions>
         <group id="com.test.baseGroup"
