@@ -8,8 +8,10 @@ import com.intellij.codeInsight.hints.presentation.InsetPresentation;
 import com.intellij.codeInsight.hints.presentation.PresentationFactory;
 import com.intellij.codeInsight.hints.presentation.SequencePresentation;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ScrollingModel;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
@@ -33,7 +35,7 @@ public class MyInlayHintsCollectorNormal implements InlayHintsCollector {
         this.editor = editor;
     }
 
-    private static final Set<String> ELE_TYPE = Set.of("METHOD","FUN","JS:TYPESCRIPT_FUNCTION","JS:FUNCTION_DECLARATION", "FUNCTION_DECLARATION", "FUNCTION_DEFINITION", "FUNCTION_PREDEFINITION");
+    private static final Set<String> ELE_TYPE = Set.of("METHOD", "FUN", "JS:TYPESCRIPT_FUNCTION", "JS:FUNCTION_DECLARATION", "FUNCTION_DECLARATION", "FUNCTION_DEFINITION", "FUNCTION_PREDEFINITION");
 
     @Override
     public boolean collect(@NotNull PsiElement psiElement, @NotNull Editor editor, @NotNull InlayHintsSink inlayHintsSink) {
@@ -55,11 +57,30 @@ public class MyInlayHintsCollectorNormal implements InlayHintsCollector {
     }
 
 
+    public void addMethodInlayTipForMethodVisibleInEditor(Editor editor, PsiElement element, Runnable runWhenOk) {
+        ApplicationManager.getApplication().invokeLater(() -> {
+            Document document = editor.getDocument();
+            ScrollingModel scrollingModel = editor.getScrollingModel();
+
+            int startLine = document.getLineNumber(element.getTextRange().getStartOffset());
+            int endLine = document.getLineNumber(element.getTextRange().getEndOffset());
+
+            int visibleAreaStartLine = document.getLineNumber(scrollingModel.getVisibleArea().y);
+            int visibleAreaEndLine = document.getLineNumber(scrollingModel.getVisibleArea().y + scrollingModel.getVisibleArea().height);
+
+            boolean ok = startLine >= visibleAreaStartLine && endLine <= visibleAreaEndLine;
+            if (ok) {
+                runWhenOk.run();
+            }
+        });
+    }
+
     AtomicInteger methodCnt = new AtomicInteger();
 
     private void addMethodInlayTipForMethod(Editor editor, PsiElement method, InlayHintsSink inlayHintsSink) {
         int textOffset = method.getTextOffset();
 
+        //final boolean isEven = methodCnt.getAndIncrement() % 2 == 0;
         final boolean isEven = true;
 
         InlayPresentation presentation = isEven ? this.generateInlayPresentationInline(editor, method) : this.generateInlayPresentationDropdown(editor, method);
@@ -141,6 +162,13 @@ public class MyInlayHintsCollectorNormal implements InlayHintsCollector {
         return factory.referenceOnHover(shiftedPresentation, clickListener);
     }
 
+    private int calculateLeftPadding(PsiElement method, Editor editor) {
+        final Document document = editor.getDocument();
+        final int textOffset = method.getTextOffset();
+        final int lineNumber = document.getLineNumber(textOffset);
+        final int lineStartOffset = document.getLineStartOffset(lineNumber);
+        return textOffset - lineStartOffset;
+    }
 
     /**
      * 计算左边距

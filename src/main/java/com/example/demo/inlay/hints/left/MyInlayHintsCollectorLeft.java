@@ -80,67 +80,70 @@ public class MyInlayHintsCollectorLeft implements InlayHintsCollector {
 
 
         RangeHighlighter highlighter = markupModel.addLineHighlighter(lineNumber, 0, new TextAttributes());
-        if (highlighter instanceof RangeHighlighterEx) {
-            highlighterExesEditor.add((RangeHighlighterEx) highlighter);
-            highlighter.setGutterIconRenderer(new GutterIconRenderer() {
-                @NotNull
-                @Override
-                public Icon getIcon() {
-                    return MyIcons.logo;
-                }
-
-                @Override
-                public String getTooltipText() {
-                    return "This is a hint for method: " + method.getText();
-                }
-
-                @Override
-                public boolean equals(Object o) {
-                    return false;
-                }
-
-                @Override
-                public int hashCode() {
-                    return 0;
-                }
-
-
-                @Override
-                public ActionGroup getPopupMenuActions() {
-                    return new ActionGroup() {
-                        @Override
-                        public AnAction @NotNull [] getChildren(@Nullable AnActionEvent anActionEvent) {
-                            final List<AnAction> list = new ArrayList<>();
-                            list.add(new AnAction() {
-                                // 实例初始化块
-                                {
-                                    Presentation presentation = getTemplatePresentation();
-                                    presentation.setText("Bug修复");
-                                }
-
-                                @Override
-                                public void actionPerformed(@NotNull AnActionEvent anActionEvent) {
-                                    System.out.println("actionPerformed" + this.getTemplateText());
-                                }
-                            });
-                            list.add(new AnAction() {
-                                // 实例初始化块
-                                {
-                                    Presentation presentation = getTemplatePresentation();
-                                    presentation.setText("代码解释");
-                                }
-
-                                @Override
-                                public void actionPerformed(@NotNull AnActionEvent anActionEvent) {
-                                    System.out.println("actionPerformed" + this.getTemplateText());
-                                }
-                            });
-                            return list.toArray(new AnAction[0]);
-                        }
-                    };
-                }
-            });
+        if (!(highlighter instanceof RangeHighlighterEx)) {
+            return;
         }
+
+
+        highlighterExesEditor.add((RangeHighlighterEx) highlighter);
+        highlighter.setGutterIconRenderer(new GutterIconRenderer() {
+            @NotNull
+            @Override
+            public Icon getIcon() {
+                return MyIcons.logo;
+            }
+
+            @Override
+            public String getTooltipText() {
+                return "This is a hint for method: " + method.getText();
+            }
+
+            @Override
+            public boolean equals(Object o) {
+                return false;
+            }
+
+            @Override
+            public int hashCode() {
+                return 0;
+            }
+
+
+            @Override
+            public ActionGroup getPopupMenuActions() {
+                return new ActionGroup() {
+                    @Override
+                    public AnAction @NotNull [] getChildren(@Nullable AnActionEvent anActionEvent) {
+                        final List<AnAction> list = new ArrayList<>();
+                        list.add(new AnAction() {
+                            // 实例初始化块
+                            {
+                                Presentation presentation = getTemplatePresentation();
+                                presentation.setText("Bug修复");
+                            }
+
+                            @Override
+                            public void actionPerformed(@NotNull AnActionEvent anActionEvent) {
+                                System.out.println("actionPerformed" + this.getTemplateText());
+                            }
+                        });
+                        list.add(new AnAction() {
+                            // 实例初始化块
+                            {
+                                Presentation presentation = getTemplatePresentation();
+                                presentation.setText("代码解释");
+                            }
+
+                            @Override
+                            public void actionPerformed(@NotNull AnActionEvent anActionEvent) {
+                                System.out.println("actionPerformed" + this.getTemplateText());
+                            }
+                        });
+                        return list.toArray(new AnAction[0]);
+                    }
+                };
+            }
+        });
     }
 
 
