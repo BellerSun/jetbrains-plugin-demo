@@ -88,6 +88,13 @@
                     popup="true"
             >
             </action>
+            <action id="com.test.MyActionOpenFileChooser"
+                    icon="MyIcons.logo"
+                    text="openChooser"
+                    class="com.example.demo.actions.MyActionOpenFileChooser"
+                    popup="true"
+            >
+            </action>
 
             <add-to-group group-id="EditorPopupMenu3" anchor="last"/>
         </group>
