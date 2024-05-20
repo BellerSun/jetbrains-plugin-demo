@@ -35,11 +35,9 @@
                                               providerId="SUNYC-providerId"/>-->
         <!--        <codeInsight.inlayProvider implementationClass="com.example.demo.inlay.hints.old.MyInlayHintsProviderNormal"
                                            language="JAVA"/>-->
-        <codeInsight.inlayProviderFactory
-                implementation="com.example.demo.inlay.hints.factory.MyInlayHintsProviderFactory"/>
-        <codeInsight.inlayProvider implementationClass="com.example.demo.inlay.hints.left.MyInlayHintsProviderLeft"
-                                   language="JAVA"/>
-        <codeInsight.lineMarkerProvider implementationClass="com.example.demo.marks.MyLineMarkerProvider"/>
+<!--        <codeInsight.inlayProviderFactory implementation="com.example.demo.inlay.hints.factory.MyInlayHintsProviderFactory"/>
+        <codeInsight.inlayProvider implementationClass="com.example.demo.inlay.hints.left.MyInlayHintsProviderLeft" language="JAVA"/>
+        <codeInsight.lineMarkerProvider implementationClass="com.example.demo.marks.MyLineMarkerProvider"/>-->
     </extensions>
     <actions>
         <group id="com.test.baseGroup"

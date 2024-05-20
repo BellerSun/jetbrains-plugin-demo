@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "com.example"
-version = "2.2.8"
+version = "2.2.10"
 
 repositories {
     mavenCentral()
@@ -59,5 +59,8 @@ tasks {
 
     publishPlugin {
         token.set(System.getenv("PUBLISH_TOKEN"))
+    }
+    buildSearchableOptions{
+        enabled = false
     }
 }
