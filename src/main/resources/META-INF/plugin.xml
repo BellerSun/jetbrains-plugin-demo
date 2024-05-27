@@ -93,6 +93,13 @@
                     popup="true"
             >
             </action>
+            <action id="com.test.MyActionDetectSelectLang"
+                    icon="MyIcons.logo"
+                    text="检测选中的语言"
+                    class="com.example.demo.actions.MyActionDetectSelectLang"
+                    popup="true"
+            >
+            </action>
 
             <add-to-group group-id="EditorPopupMenu3" anchor="last"/>
         </group>

@@ -1,7 +1,15 @@
 package com.example.demo.utils;
 
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.util.PsiUtilCore;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.function.Predicate;
 
 /**
@@ -53,6 +61,41 @@ public final class JbrToolKit {
                 sb.append("\n").append(line);
             }
             return sb.toString();
+        }
+    }
+
+
+    public static final class Language {
+
+        private Language() {
+        }
+
+        private static final List<String> FILE_EXTENSIONS = Arrays.asList(
+                "java", "kt"
+                , "py"
+                , "js", "ts", "html", "css"
+                , "xml"
+                , "cpp", "h"
+                , "go"
+                , "sql"
+                , "sh"
+        );
+
+
+        public static com.intellij.lang.Language detectLanguage(Project project, String code) {
+            FileTypeManager fileTypeManager = FileTypeManager.getInstance();
+
+            for (String ext : FILE_EXTENSIONS) {
+                final PsiFileFactory factory = PsiFileFactory.getInstance(project);
+                final PsiFile psiFile = factory.createFileFromText("tempFile.txt",  code);
+                final com.intellij.lang.Language language = PsiUtilCore.getLanguageAtOffset(psiFile, 0);
+                if (!language.getID().equals("UNKNOWN")) {
+                    return language;
+                }
+            }
+
+            // 获取文件的语言
+            return null;
         }
     }
 }
