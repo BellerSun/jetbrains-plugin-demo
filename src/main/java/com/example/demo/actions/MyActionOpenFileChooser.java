@@ -3,6 +3,7 @@ package com.example.demo.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileChooser.*;
+import com.intellij.openapi.fileChooser.ex.FileSaverDialogImpl;
 import com.intellij.openapi.fileChooser.impl.LocalFileChooserFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
@@ -11,6 +12,7 @@ import com.intellij.openapi.ui.messages.MessagesService;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWrapper;
 import org.jetbrains.annotations.NonNls;
@@ -62,9 +64,12 @@ public class MyActionOpenFileChooser extends AnAction {
 
         String projectBasePath = project.getBasePath();
 
-        Path path = Paths.get(projectBasePath);
-        VirtualFileWrapper save = new LocalFileChooserFactory().createSaveFileDialog(new FileSaverDescriptor("title", "desc", "java"), project)
-                .save(path,"aaa.java");
+        VirtualFile baseDir = LocalFileSystem.getInstance().findFileByPath(projectBasePath);
+
+        FileSaverDialogImpl saveFileDialog = new FileSaverDialogImpl(new FileSaverDescriptor("", ""), project);
+        //FileSaverDialog saveFileDialog = new LocalFileChooserFactory().createSaveFileDialog(new FileSaverDescriptor("", ""), project);
+        VirtualFileWrapper save = saveFileDialog
+                .save(baseDir,"aaa.java");
         System.out.println(save);
 
 

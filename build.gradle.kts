@@ -19,7 +19,7 @@ intellij {
     version.set("2024.1.1")
     type.set("IU") // Target IDE Platform
 
-    plugins.set(listOf("com.intellij.java"))
+    plugins.set(listOf("com.intellij.java","maven","terminal"))
 }
 sourceSets {
     main {
@@ -33,7 +33,9 @@ dependencies {
     implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
     // https://mvnrepository.com/artifact/cn.hutool/hutool-all
     implementation("cn.hutool:hutool-all:5.8.25")
-
+// lombok
+    implementation("org.projectlombok:lombok:1.18.22")
+    annotationProcessor("org.projectlombok:lombok:1.18.22")
 }
 
 tasks {
