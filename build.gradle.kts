@@ -36,6 +36,9 @@ dependencies {
 // lombok
     implementation("org.projectlombok:lombok:1.18.22")
     annotationProcessor("org.projectlombok:lombok:1.18.22")
+
+    // https://mvnrepository.com/artifact/io.github.java-diff-utils/java-diff-utils
+    implementation("io.github.java-diff-utils:java-diff-utils:4.12")
 }
 
 tasks {

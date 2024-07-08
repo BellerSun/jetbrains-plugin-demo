@@ -88,6 +88,14 @@
                     popup="true"
             >
             </action>
+            <action id="com.test.MyDiffAction"
+                    icon="MyIcons.logo"
+                    text="对比咯"
+                    class="com.example.demo.actions.MyDiffAction"
+                    popup="true"
+            >
+                <add-to-group group-id="Diff.ViewerToolbar" />
+            </action>
             <action id="com.test.MyActionOpenFileChooser"
                     icon="MyIcons.logo"
                     text="openChooser"
