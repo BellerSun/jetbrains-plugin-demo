@@ -190,6 +190,7 @@ public class MyDiffAction extends AnAction {
         List<String> unifiedDiff = UnifiedDiffUtils.generateUnifiedDiff(fileName1, fileName2, lines1, patch, 0);
 
         String diffText = String.join("", unifiedDiff);
+        System.out.println(diffText);
         // Show the diff using your preferred method
         // cU.a().a(project, editor, cM.g, true, diffText);
     }
@@ -222,17 +223,25 @@ public class MyDiffAction extends AnAction {
      */
     private void handleSimpleDiffRequest(Project project, SimpleDiffRequest request) {
         List<DiffContent> contents = request.getContents();
-        if (contents.size() != 2 || !(contents.get(1) instanceof EmptyContent)) return;
+        if (contents.size() != 2) {
+            return;
+        }
 
         ApplicationManager.getApplication().runReadAction(() -> {
-            Document document = ((DocumentContent) contents.get(0)).getDocument();
-            VirtualFile file = FileDocumentManager.getInstance().getFile(document);
 
+            handleDiffContent(project,contents.get(0),contents.get(1));
+
+
+/*            Document document = ((DocumentContent) contents.get(0)).getDocument();
+            VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+            if (file==null){
+                return;
+            }
             List<String> lines = Arrays.asList(StringUtil.splitByLinesKeepSeparators(document.getText()));
             StringBuilder diffBuilder = new StringBuilder("@@@ " + file.getName() + "\n");
             lines.forEach(line -> diffBuilder.append("- ").append(line));
-
             String diffText = diffBuilder.toString();
+            System.out.println(diffText);*/
             // Show the diff using your preferred method
             // cU.a().a(project, null, cM.g, true, diffText);
         });
