@@ -3,19 +3,21 @@ package com.example.demo.actions;
 import com.github.difflib.DiffUtils;
 import com.github.difflib.UnifiedDiffUtils;
 import com.github.difflib.patch.Patch;
+import com.github.difflib.text.DiffRow;
+import com.github.difflib.text.DiffRowGenerator;
 import com.intellij.diff.actions.impl.MutableDiffRequestChain;
 import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.chains.SimpleDiffRequestChain;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
-import com.intellij.diff.contents.EmptyContent;
 import com.intellij.diff.contents.FileDocumentContentImpl;
 import com.intellij.diff.editor.ChainDiffVirtualFile;
 import com.intellij.diff.impl.DiffRequestProcessor;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
+import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -45,6 +47,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.FutureTask;
+import java.util.stream.Collectors;
 
 public class MyDiffAction extends AnAction {
 
@@ -66,6 +69,21 @@ public class MyDiffAction extends AnAction {
      */
     private void processDiffAction(@NotNull AnActionEvent anActionEvent) throws Exception {
         final Project project = anActionEvent.getProject();
+        DiffRequest diffRequest = anActionEvent.getData(DiffDataKeys.DIFF_REQUEST);
+
+        if (diffRequest instanceof ContentDiffRequest contentDiffRequest) {
+            final List<DiffContent> contents = contentDiffRequest.getContents();
+            if (contents.size() == 2) {
+                DiffContent c1 = contents.get(0);
+                DiffContent c2 = contents.get(1);
+                handleDiffContent(project, c1, c2);
+                return;
+            } else {
+                System.out.println("[MY_DIFF] Not a diff content request, contentSize:" + contents.size());
+            }
+        }
+
+
         final VirtualFile[] selectedFiles = FileEditorManager.getInstance(project).getSelectedFiles();
 
         // 如果没有选中文件，则返回
@@ -173,6 +191,9 @@ public class MyDiffAction extends AnAction {
         }
     }
 
+
+    private int diffType = 0;
+
     /**
      * 生成并显示差异
      *
@@ -183,16 +204,78 @@ public class MyDiffAction extends AnAction {
      * @param fileName2 第二个文件名
      */
     private void generateAndShowDiff(Project project, Document document1, Document document2, String fileName1, String fileName2) {
+
+        generateAndShowFullDiffUnified(project, document1, document2, fileName1, fileName2);
+        //generateAndShowFullDiff(project, document1, document2, fileName1, fileName2);
+
+        generateAndShowSimpleDiffUnified(project, document1, document2, fileName1, fileName2);
+/*        int diffType = this.diffType % 3;
+        switch (diffType) {
+            case 0:
+            case 1:
+            case 2:
+            default:
+                System.out.println("[DIFF] diffType not support");
+        }
+        this.diffType++;*/
+    }
+
+    private void generateAndShowSimpleDiffUnified(Project project, Document document1, Document document2, String fileName1, String fileName2) {
+
+
         List<String> lines1 = Arrays.asList(StringUtil.splitByLinesKeepSeparators(document1.getText()));
         List<String> lines2 = Arrays.asList(StringUtil.splitByLinesKeepSeparators(document2.getText()));
 
         Patch<String> patch = DiffUtils.diff(lines1, lines2);
         List<String> unifiedDiff = UnifiedDiffUtils.generateUnifiedDiff(fileName1, fileName2, lines1, patch, 0);
 
-        String diffText = String.join("", unifiedDiff);
+        List<String> unifiedDiffHas = unifiedDiff.stream().map(line -> line + (line.endsWith("\n") ? "" : "\n")).toList();
+        String diffText = String.join("", unifiedDiffHas);
+        System.out.println("[DIFF_SIMPLE_UNIFIED]------------------------------------------↓↓↓↓↓↓↓↓↓↓↓↓--------------------------------------------------");
         System.out.println(diffText);
+        System.out.println("[DIFF_SIMPLE_UNIFIED]------------------------------------------↑↑↑↑↑↑↑↑↑↑↑↑--------------------------------------------------");
         // Show the diff using your preferred method
         // cU.a().a(project, editor, cM.g, true, diffText);
+    }
+
+    private void generateAndShowFullDiffUnified(Project project, Document document1, Document document2, String fileName1, String fileName2) {
+        List<String> lines1 = Arrays.asList(StringUtil.splitByLinesKeepSeparators(document1.getText()));
+        List<String> lines2 = Arrays.asList(StringUtil.splitByLinesKeepSeparators(document2.getText()));
+
+        Patch<String> patch = DiffUtils.diff(lines1, lines2);
+        List<String> unifiedDiff = UnifiedDiffUtils.generateUnifiedDiff(fileName1, fileName2, lines1, patch, 10000);
+
+        List<String> unifiedDiffHas = unifiedDiff.stream().map(line -> line + (line.endsWith("\n") ? "" : "\n")).toList();
+
+        String diffText = String.join("", unifiedDiffHas);
+        System.out.println("[DIFF_FULL_UNIFIED]------------------------------------------↓↓↓↓↓↓↓↓↓↓↓↓--------------------------------------------------");
+        System.out.println(diffText);
+        System.out.println("[DIFF_FULL_UNIFIED]------------------------------------------↑↑↑↑↑↑↑↑↑↑↑↑--------------------------------------------------");
+    }
+
+
+    private void generateAndShowFullDiff(Project project, Document document1, Document document2, String fileName1, String fileName2) {
+        List<String> lines1 = Arrays.asList(StringUtil.splitByLinesKeepSeparators(document1.getText()));
+        List<String> lines2 = Arrays.asList(StringUtil.splitByLinesKeepSeparators(document2.getText()));
+
+        // 使用DiffRowGenerator来生成详细的diff行
+        DiffRowGenerator generator = DiffRowGenerator.create()
+                .showInlineDiffs(true) // 显示行内差异
+                .inlineDiffByWord(true) // 逐词显示行内差异
+                .build();
+        List<DiffRow> rows = generator.generateDiffRows(lines1, lines2);
+
+        // 将详细的diff行组合成完整的diff文本
+        StringBuilder diffText = new StringBuilder();
+        for (DiffRow row : rows) {
+            diffText.append(row.getOldLine()).append(" | ").append(row.getNewLine()).append("\n");
+        }
+
+        System.out.println("[DIFF_FULL]------------------------------------------↓↓↓↓↓↓↓↓↓↓↓↓--------------------------------------------------");
+        System.out.println(diffText);
+        System.out.println("[DIFF_FULL]------------------------------------------↑↑↑↑↑↑↑↑↑↑↑↑--------------------------------------------------");
+        // Show the diff using your preferred method
+        // cU.a().a(project, editor, cM.g, true, diffText.toString());
     }
 
     /**
@@ -229,7 +312,7 @@ public class MyDiffAction extends AnAction {
 
         ApplicationManager.getApplication().runReadAction(() -> {
 
-            handleDiffContent(project,contents.get(0),contents.get(1));
+            handleDiffContent(project, contents.get(0), contents.get(1));
 
 
 /*            Document document = ((DocumentContent) contents.get(0)).getDocument();
