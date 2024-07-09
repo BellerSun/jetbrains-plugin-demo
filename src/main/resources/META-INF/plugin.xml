@@ -96,6 +96,14 @@
             >
                 <add-to-group group-id="Diff.ViewerToolbar" />
             </action>
+            <action id="com.test.MyCommitMsgAction"
+                    icon="MyIcons.logo"
+                    text="计算commit消息"
+                    class="com.example.demo.actions.MyCommitMsgAction"
+                    popup="true"
+            >
+                <add-to-group group-id="Vcs.MessageActionGroup" />
+            </action>
             <action id="com.test.MyActionOpenFileChooser"
                     icon="MyIcons.logo"
                     text="openChooser"
