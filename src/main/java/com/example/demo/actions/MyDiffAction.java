@@ -1,15 +1,11 @@
 package com.example.demo.actions;
 
 import com.github.difflib.DiffUtils;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.history.VcsFileRevision;
-import com.intellij.openapi.vcs.history.VcsHistorySession;
 import com.github.difflib.UnifiedDiffUtils;
 import com.github.difflib.patch.Patch;
 import com.intellij.diff.actions.impl.MutableDiffRequestChain;
 import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.chains.DiffRequestProducer;
-import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.chains.SimpleDiffRequestChain;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
@@ -23,7 +19,6 @@ import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -35,8 +30,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.PreviewDiffVirtualFile;
+import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
+import com.intellij.openapi.vcs.history.VcsHistorySession;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
@@ -46,7 +44,6 @@ import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.FutureTask;
 
 public class MyDiffAction extends AnAction {
@@ -56,201 +53,272 @@ public class MyDiffAction extends AnAction {
     @Override
     public void actionPerformed(@NotNull AnActionEvent anActionEvent) {
         try {
-            actionPerformed0(anActionEvent);
+            processDiffAction(anActionEvent);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
-    public void actionPerformed0(@NotNull AnActionEvent anActionEvent) throws Exception {
-        Project project = anActionEvent.getProject();
+    /**
+     * 处理差异操作的主入口
+     *
+     * @param anActionEvent 动作事件
+     */
+    private void processDiffAction(@NotNull AnActionEvent anActionEvent) throws Exception {
+        final Project project = anActionEvent.getProject();
+        final VirtualFile[] selectedFiles = FileEditorManager.getInstance(project).getSelectedFiles();
 
-        ApplicationInfo applicationInfo = ApplicationInfo.getInstance();
-        String majorVersion = applicationInfo.getMajorVersion();
+        // 如果没有选中文件，则返回
+        if (selectedFiles.length == 0) return;
 
-
-        FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
-        VirtualFile[] arrvirtualFile = fileEditorManager.getSelectedFiles();
-
-        boolean sw = System.getenv("aaa") != null;
-        Method method;
-        if (arrvirtualFile[0] instanceof ChainDiffVirtualFile) {
-            FutureTask<DiffRequest> futureTask;
-            Patch patch;
-            ChainDiffVirtualFile chainDiffVirtualFile = (ChainDiffVirtualFile) arrvirtualFile[0];
-            String string3 = null;
-            String string4 = null;
-            Document document = null;
-            Document document2 = null;
-            DiffRequestChain diffVirtualFileChain = chainDiffVirtualFile.getChain();
-            boolean isMutable = diffVirtualFileChain instanceof MutableDiffRequestChain;
-            boolean isSimple = diffVirtualFileChain instanceof SimpleDiffRequestChain;
-
-            if (isMutable) {
-                MutableDiffRequestChain mutableDiffRequestChain = (MutableDiffRequestChain) diffVirtualFileChain;
-                FileDocumentContentImpl fileDocumentContentImpl = (FileDocumentContentImpl) mutableDiffRequestChain.getContent1();
-                document = fileDocumentContentImpl.getDocument();
-                string3 = fileDocumentContentImpl.getFile().getName();
-
-                FileDocumentContentImpl content2 = (FileDocumentContentImpl) mutableDiffRequestChain.getContent2();
-
-                document2 = content2.getDocument();
-                string4 = content2.getFile().getName();
-            } else if (isSimple) {
-                SimpleDiffRequestChain simpleDiffRequestChain = (SimpleDiffRequestChain) diffVirtualFileChain;
-                Class chainClass = simpleDiffRequestChain.getClass();
-                Method getListSelection = chainClass.getMethod("getListSelection", new Class[0]);
-                ListSelection listSelection = (ListSelection) getListSelection.invoke(simpleDiffRequestChain, new Object[0]);
-                DiffRequestProducer diffRequestProducer = (DiffRequestProducer) listSelection.getList().get(0);
-                futureTask = new FutureTask<>(new Callable<DiffRequest>() {
-                    public DiffRequest a() throws DiffRequestProducerException {
-                        return diffRequestProducer.process(simpleDiffRequestChain, new EmptyProgressIndicator());
-                    }
-
-                    @Override
-                    public DiffRequest call() throws DiffRequestProducerException {
-                        return this.a();
-                    }
-                });
-                ApplicationManager.getApplication().executeOnPooledThread(futureTask);
-                DiffRequest diffRequest = futureTask.get();
-                if (!(diffRequest instanceof ContentDiffRequest)) return;
-                ContentDiffRequest contentDiffRequest = (ContentDiffRequest) diffRequest;
-                List list = contentDiffRequest.getContents();
-                if (list.size() != 2) return;
-                try {
-                    DiffContent diffContent = (DiffContent) list.get(0);
-                    DiffContent diffContent2 = (DiffContent) list.get(1);
-                    DocumentContent documentContent = (DocumentContent) diffContent;
-                    document = documentContent.getDocument();
-                    FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
-                    VirtualFile virtualFile = fileDocumentManager.getFile(document);
-                    if (virtualFile != null) {
-                        string3 = virtualFile.getName();
-                    }
-                    FileDocumentContentImpl fileDocumentContentImpl = (FileDocumentContentImpl) diffContent2;
-                    document2 = fileDocumentContentImpl.getDocument();
-                    string4 = fileDocumentContentImpl.getFile().getName();
-                } catch (Exception exception) {
-                    DiffContent diffContent = (DiffContent) list.get(0);
-                    DiffContent diffContent3 = (DiffContent) list.get(1);
-                    DocumentContent documentContent = (DocumentContent) diffContent;
-                    document = documentContent.getDocument();
-                    DocumentContent documentContent2 = (DocumentContent) diffContent3;
-                    document2 = documentContent2.getDocument();
-                    string3 = "Current/Clipboard";
-                    string4 = "Generated";
-                }
-            }
-
-
-            List<String> list1 = Arrays.asList(StringUtil.splitByLinesKeepSeparators((String) document.getText()));
-            List<String> list = Arrays.asList(StringUtil.splitByLinesKeepSeparators((String) document2.getText()));
-            Patch<String> patchStr = DiffUtils.diff(list1, list);
-            List<String> unifiedDiff = UnifiedDiffUtils.generateUnifiedDiff(string3, string4, list1, patchStr, (int) 0);
-            String string5 = String.join("", unifiedDiff);
-            //cU.a().a(project, editor, cM.g, true, string5);
-            return;
+        final VirtualFile selectedFile = selectedFiles[0];
+        if (selectedFile instanceof ChainDiffVirtualFile) {
+            // 处理链式差异虚拟文件
+            processChainDiffVirtualFile(project, (ChainDiffVirtualFile) selectedFile);
+        } else if (selectedFile instanceof PreviewDiffVirtualFile) {
+            // 处理预览差异虚拟文件
+            processPreviewDiffVirtualFile(project, (PreviewDiffVirtualFile) selectedFile);
         }
-
-
-        if (!(arrvirtualFile[0] instanceof PreviewDiffVirtualFile)) return;
-
-
-        PreviewDiffVirtualFile previewDiffVirtualFile = (PreviewDiffVirtualFile) arrvirtualFile[0];
-        DiffRequestProcessor diffRequestProcessor = previewDiffVirtualFile.createProcessor(project);
-        DiffRequest diffRequest = diffRequestProcessor.getActiveRequest();
-        List list = null;
-
-        method = diffRequest.getClass().
-
-                getMethod("getFilesToRefresh", new Class[0]);
-
-        list = (List) method.invoke((Object) diffRequest, new Object[0]);
-        if (list == null || list.size() == 0) {
-            SimpleDiffRequest simpleDiffRequest = (SimpleDiffRequest) diffRequest;
-            List list2 = simpleDiffRequest.getContents();
-            if (list2.size() != 2 || !(list2.get(1) instanceof EmptyContent)) return;
-            FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
-            ApplicationManager.getApplication().runReadAction(() -> {
-                DiffContent diffContent = (DiffContent) list2.get(0);
-                DocumentContent documentContent = (DocumentContent) diffContent;
-                Document document = documentContent.getDocument();
-                VirtualFile virtualFile = fileDocumentManager.getFile(document);
-                List<String> list3 = Arrays.asList(StringUtil.splitByLinesKeepSeparators((String) document.getText()));
-                StringBuilder stringBuilder = new StringBuilder("@@@ " + virtualFile.getName() + "\n");
-                for (String string : list3) {
-                    stringBuilder.append("- ").append(string);
-                }
-                String string = stringBuilder.toString();
-                //ApplicationManager.getApplication().invokeLater(() -> cU.a().a(project, null, cM.g, true, string));
-            });
-            return;
-        }
-
-        VirtualFile vf = (VirtualFile) list.get(0);
-        ProjectLevelVcsManager projectLevelVcsManager = ProjectLevelVcsManager.getInstance((Project) project);
-        AbstractVcs abstractVcs = projectLevelVcsManager.getVcsFor(vf);
-        if (abstractVcs == null) {
-            return;
-        }
-
-        VcsHistoryProvider vcsHistoryProvider = abstractVcs.getVcsHistoryProvider();
-        if (vcsHistoryProvider == null) {
-            return;
-        }
-
-        FilePath filePath = VcsUtil.getFilePath( vf.getPath());
-        System.out.println();
-        //Editor editor2 = editor;
-        ApplicationManager.getApplication().executeOnPooledThread(() -> a(vcsHistoryProvider, filePath, vf, project));
-        return;
     }
 
+    /**
+     * 处理链式差异虚拟文件
+     *
+     * @param project              当前项目
+     * @param chainDiffVirtualFile 链式差异虚拟文件
+     */
+    private void processChainDiffVirtualFile(Project project, ChainDiffVirtualFile chainDiffVirtualFile) throws Exception {
+        // 获取差异请求链
+        final DiffRequestChain diffRequestChain = chainDiffVirtualFile.getChain();
 
+        if (diffRequestChain instanceof MutableDiffRequestChain) {
+            //处理可变差异请求链
+            processMutableDiffRequestChain(project, (MutableDiffRequestChain) diffRequestChain);
+        } else if (diffRequestChain instanceof SimpleDiffRequestChain) {
+            // 处理简单差异请求链
+            processSimpleDiffRequestChain(project, (SimpleDiffRequestChain) diffRequestChain);
+        }
+    }
 
-    private static void a(VcsHistoryProvider vcsHistoryProvider, FilePath filePath, VirtualFile virtualFile, Project project) {
-        VcsHistorySession vcsHistorySession = null;
-        try {
-            vcsHistorySession = vcsHistoryProvider.createSessionFor(filePath);
-        }
-        catch (VcsException vcsException) {
-        }
-        if (vcsHistorySession == null) {
-            return;
-        }
-        List list = vcsHistorySession.getRevisionList();
-        try {
-            if (list.isEmpty()) {
-                FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
-                ApplicationManager.getApplication().runReadAction(() -> {
-                    Document document = fileDocumentManager.getDocument(virtualFile);
-                    List<String> list2 = Arrays.asList(StringUtil.splitByLinesKeepSeparators((String)document.getText()));
-                    StringBuilder stringBuilder = new StringBuilder("@@@ " + virtualFile.getName() + "\n");
-                    for (String string : list2) {
-                        stringBuilder.append("+ ").append(string);
-                    }
-                    String string = stringBuilder.toString();
-                    System.out.println();
-                    //ApplicationManager.getApplication().invokeLater(() -> cU.a().a(project, editor, cM.g, true, string));
-                });
-            } else {
-                VcsFileRevision vcsFileRevision = (VcsFileRevision)list.get(0);
-                byte[] arrby = vcsFileRevision.loadContent();
-                String string = new String(arrby, StandardCharsets.UTF_8);
-                String string2 = VfsUtil.loadText((VirtualFile)virtualFile);
-                List<String> list2 = Arrays.asList(StringUtil.splitByLinesKeepSeparators((String)string));
-                List<String> list3 = Arrays.asList(StringUtil.splitByLinesKeepSeparators((String)string2));
-                Patch patch = DiffUtils.diff(list2, list3);
-                List list4 = UnifiedDiffUtils.generateUnifiedDiff((String)vcsFileRevision.getRevisionNumber().toString(), (String)virtualFile.getName(), list2, (Patch)patch, (int)0);
-                String string3 = String.join((CharSequence)"", list4);
-                System.out.println();
-                //ApplicationManager.getApplication().invokeLater(() -> cU.a().a(project, editor, cM.g, true, string3));
+    /**
+     * 处理可变差异请求链
+     *
+     * @param project 当前项目
+     * @param chain   可变差异请求链
+     */
+    private void processMutableDiffRequestChain(Project project, MutableDiffRequestChain chain) {
+        FileDocumentContentImpl content1 = (FileDocumentContentImpl) chain.getContent1();
+        FileDocumentContentImpl content2 = (FileDocumentContentImpl) chain.getContent2();
+
+        Document document1 = content1.getDocument();
+        Document document2 = content2.getDocument();
+
+        String fileName1 = content1.getFile().getName();
+        String fileName2 = content2.getFile().getName();
+
+        generateAndShowDiff(project, document1, document2, fileName1, fileName2);
+    }
+
+    /**
+     * 处理简单差异请求链
+     *
+     * @param project 当前项目
+     * @param chain   简单差异请求链
+     */
+    private void processSimpleDiffRequestChain(Project project, SimpleDiffRequestChain chain) throws Exception {
+        ListSelection listSelection = (ListSelection) chain.getClass().getMethod("getListSelection").invoke(chain);
+        DiffRequestProducer producer = (DiffRequestProducer) listSelection.getList().get(0);
+
+        FutureTask<DiffRequest> futureTask = new FutureTask<>(() -> producer.process(chain, new EmptyProgressIndicator()));
+        ApplicationManager.getApplication().executeOnPooledThread(futureTask);
+        DiffRequest diffRequest = futureTask.get();
+
+        if (diffRequest instanceof ContentDiffRequest) {
+            ContentDiffRequest contentDiffRequest = (ContentDiffRequest) diffRequest;
+            List<DiffContent> contents = contentDiffRequest.getContents();
+
+            if (contents.size() == 2) {
+                handleDiffContent(project, contents.get(0), contents.get(1));
             }
         }
-        catch (Exception exception) {
-            // empty catch block
+    }
+
+    /**
+     * 处理差异内容
+     *
+     * @param project  当前项目
+     * @param content1 第一个差异内容
+     * @param content2 第二个差异内容
+     */
+    private void handleDiffContent(Project project, DiffContent content1, DiffContent content2) {
+        try {
+            Document document1 = ((DocumentContent) content1).getDocument();
+            Document document2 = ((DocumentContent) content2).getDocument();
+            VirtualFile file1 = FileDocumentManager.getInstance().getFile(document1);
+            VirtualFile file2 = ((FileDocumentContentImpl) content2).getFile();
+
+            String fileName1 = (file1 != null) ? file1.getName() : "Current/Clipboard";
+            String fileName2 = file2.getName();
+
+            generateAndShowDiff(project, document1, document2, fileName1, fileName2);
+        } catch (Exception e) {
+            Document document1 = ((DocumentContent) content1).getDocument();
+            Document document2 = ((DocumentContent) content2).getDocument();
+
+            generateAndShowDiff(project, document1, document2, "Current/Clipboard", "Generated");
+        }
+    }
+
+    /**
+     * 生成并显示差异
+     *
+     * @param project   当前项目
+     * @param document1 第一个文档
+     * @param document2 第二个文档
+     * @param fileName1 第一个文件名
+     * @param fileName2 第二个文件名
+     */
+    private void generateAndShowDiff(Project project, Document document1, Document document2, String fileName1, String fileName2) {
+        List<String> lines1 = Arrays.asList(StringUtil.splitByLinesKeepSeparators(document1.getText()));
+        List<String> lines2 = Arrays.asList(StringUtil.splitByLinesKeepSeparators(document2.getText()));
+
+        Patch<String> patch = DiffUtils.diff(lines1, lines2);
+        List<String> unifiedDiff = UnifiedDiffUtils.generateUnifiedDiff(fileName1, fileName2, lines1, patch, 0);
+
+        String diffText = String.join("", unifiedDiff);
+        // Show the diff using your preferred method
+        // cU.a().a(project, editor, cM.g, true, diffText);
+    }
+
+    /**
+     * 处理预览差异虚拟文件
+     *
+     * @param project     当前项目
+     * @param previewFile 预览差异虚拟文件
+     */
+    private void processPreviewDiffVirtualFile(Project project, PreviewDiffVirtualFile previewFile) throws Exception {
+        DiffRequestProcessor processor = previewFile.createProcessor(project);
+        DiffRequest diffRequest = processor.getActiveRequest();
+
+        Method method = diffRequest.getClass().getMethod("getFilesToRefresh");
+        List<VirtualFile> filesToRefresh = (List<VirtualFile>) method.invoke(diffRequest);
+
+        if (filesToRefresh == null || filesToRefresh.isEmpty()) {
+            handleSimpleDiffRequest(project, (SimpleDiffRequest) diffRequest);
+        } else {
+            refreshFiles(project, filesToRefresh.get(0));
+        }
+    }
+
+    /**
+     * 处理简单差异请求
+     *
+     * @param project 当前项目
+     * @param request 简单差异请求
+     */
+    private void handleSimpleDiffRequest(Project project, SimpleDiffRequest request) {
+        List<DiffContent> contents = request.getContents();
+        if (contents.size() != 2 || !(contents.get(1) instanceof EmptyContent)) return;
+
+        ApplicationManager.getApplication().runReadAction(() -> {
+            Document document = ((DocumentContent) contents.get(0)).getDocument();
+            VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+
+            List<String> lines = Arrays.asList(StringUtil.splitByLinesKeepSeparators(document.getText()));
+            StringBuilder diffBuilder = new StringBuilder("@@@ " + file.getName() + "\n");
+            lines.forEach(line -> diffBuilder.append("- ").append(line));
+
+            String diffText = diffBuilder.toString();
+            // Show the diff using your preferred method
+            // cU.a().a(project, null, cM.g, true, diffText);
+        });
+    }
+
+    /**
+     * 刷新文件
+     *
+     * @param project 当前项目
+     * @param file    虚拟文件
+     */
+    private void refreshFiles(Project project, VirtualFile file) {
+        ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
+        AbstractVcs vcs = vcsManager.getVcsFor(file);
+
+        if (vcs == null) return;
+
+        VcsHistoryProvider historyProvider = vcs.getVcsHistoryProvider();
+        if (historyProvider == null) return;
+
+        FilePath filePath = VcsUtil.getFilePath(file.getPath());
+        ApplicationManager.getApplication().executeOnPooledThread(() -> loadAndShowVcsHistory(historyProvider, filePath, file, project));
+    }
+
+    /**
+     * 加载并显示版本控制系统历史记录
+     *
+     * @param provider 版本控制系统历史记录提供者
+     * @param filePath 文件路径
+     * @param file     虚拟文件
+     * @param project  当前项目
+     */
+    private void loadAndShowVcsHistory(VcsHistoryProvider provider, FilePath filePath, VirtualFile file, Project project) {
+        try {
+            VcsHistorySession session = provider.createSessionFor(filePath);
+
+            if (session == null || session.getRevisionList().isEmpty()) {
+                showCurrentFileContent(project, file);
+            } else {
+                showVcsDiff(project, file, session.getRevisionList().get(0));
+            }
+        } catch (VcsException e) {
+            logger.error("Failed to load VCS history", e);
+        }
+    }
+
+    /**
+     * 显示当前文件内容
+     *
+     * @param project 当前项目
+     * @param file    虚拟文件
+     */
+    private void showCurrentFileContent(Project project, VirtualFile file) {
+        FileDocumentManager manager = FileDocumentManager.getInstance();
+        ApplicationManager.getApplication().runReadAction(() -> {
+            Document document = manager.getDocument(file);
+            List<String> lines = Arrays.asList(StringUtil.splitByLinesKeepSeparators(document.getText()));
+            StringBuilder diffBuilder = new StringBuilder("@@@ " + file.getName() + "\n");
+            lines.forEach(line -> diffBuilder.append("+ ").append(line));
+
+            String diffText = diffBuilder.toString();
+            // Show the diff using your preferred method
+            // cU.a().a(project, editor, cM.g, true, diffText);
+        });
+    }
+
+    /**
+     * 显示版本控制系统差异
+     *
+     * @param project  当前项目
+     * @param file     虚拟文件
+     * @param revision 版本文件修订
+     */
+    private void showVcsDiff(Project project, VirtualFile file, VcsFileRevision revision) {
+        try {
+            byte[] content = revision.loadContent();
+            String oldText = new String(content, StandardCharsets.UTF_8);
+            String newText = VfsUtil.loadText(file);
+
+            List<String> oldLines = Arrays.asList(StringUtil.splitByLinesKeepSeparators(oldText));
+            List<String> newLines = Arrays.asList(StringUtil.splitByLinesKeepSeparators(newText));
+
+            Patch<String> patch = DiffUtils.diff(oldLines, newLines);
+            List<String> unifiedDiff = UnifiedDiffUtils.generateUnifiedDiff(revision.getRevisionNumber().toString(), file.getName(), oldLines, patch, 0);
+
+            String diffText = String.join("", unifiedDiff);
+            // Show the diff using your preferred method
+            // cU.a().a(project, editor, cM.g, true, diffText);
+        } catch (Exception e) {
+            logger.error("Failed to show VCS diff", e);
         }
     }
 }
-
