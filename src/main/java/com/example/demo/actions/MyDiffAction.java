@@ -31,6 +31,7 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.EditorTabDiffPreview;
 import com.intellij.openapi.vcs.changes.PreviewDiffVirtualFile;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
@@ -78,6 +79,8 @@ public class MyDiffAction extends AnAction {
         } else if (selectedFile instanceof PreviewDiffVirtualFile) {
             // 处理预览差异虚拟文件
             processPreviewDiffVirtualFile(project, (PreviewDiffVirtualFile) selectedFile);
+        } else {
+            System.out.println("[MY_DIFF] Not a diff file, fileType" + selectedFile.getClass().getName());
         }
     }
 
@@ -97,6 +100,8 @@ public class MyDiffAction extends AnAction {
         } else if (diffRequestChain instanceof SimpleDiffRequestChain) {
             // 处理简单差异请求链
             processSimpleDiffRequestChain(project, (SimpleDiffRequestChain) diffRequestChain);
+        } else {
+            System.out.println("[MY_DIFF] Not a diff chain file, chainType:" + diffRequestChain.getClass().getName());
         }
     }
 
