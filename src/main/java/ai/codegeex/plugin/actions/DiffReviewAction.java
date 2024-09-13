@@ -1,4 +1,3 @@
-/*
 package ai.codegeex.plugin.actions;
 
 import com.intellij.diff.actions.impl.MutableDiffRequestChain;
@@ -312,4 +311,3 @@ public class DiffReviewAction extends AnAction{
         return ActionUpdateThread.EDT;
     }
 }
-*/

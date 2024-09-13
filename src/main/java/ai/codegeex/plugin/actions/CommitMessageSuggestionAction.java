@@ -1,4 +1,3 @@
-/*
 package ai.codegeex.plugin.actions;
 
 import ai.codegeex.plugin.CodegeexIcons;
@@ -275,4 +274,3 @@ public class CommitMessageSuggestionAction extends AnAction implements DumbAware
         }
     }
 }
-*/

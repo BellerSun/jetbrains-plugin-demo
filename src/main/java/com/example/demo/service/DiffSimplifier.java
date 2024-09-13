@@ -19,6 +19,7 @@ import java.io.StringWriter;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -47,6 +48,8 @@ public final class DiffSimplifier {
             List<Change> filteredChanges = changes.stream()
                     .filter(change -> !isChangeIgnored(change))
                     .filter(change -> isChangeMatched(change, ignorePatterns))
+                    // 到时候看看根据啥排序
+                    //.sorted(Comparator.comparing(c -> c.getVirtualFile().getName()))
                     .collect(Collectors.toList());
 
             if (filteredChanges.isEmpty()) {

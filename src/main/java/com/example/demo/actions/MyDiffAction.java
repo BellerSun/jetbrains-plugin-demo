@@ -11,6 +11,7 @@ import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.chains.SimpleDiffRequestChain;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
+import com.intellij.diff.contents.EmptyContent;
 import com.intellij.diff.contents.FileDocumentContentImpl;
 import com.intellij.diff.editor.ChainDiffVirtualFile;
 import com.intellij.diff.impl.DiffRequestProcessor;
@@ -47,7 +48,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.FutureTask;
-import java.util.stream.Collectors;
 
 public class MyDiffAction extends AnAction {
 
@@ -174,21 +174,32 @@ public class MyDiffAction extends AnAction {
      */
     private void handleDiffContent(Project project, DiffContent content1, DiffContent content2) {
         try {
-            Document document1 = ((DocumentContent) content1).getDocument();
-            Document document2 = ((DocumentContent) content2).getDocument();
+            Document document1 = content2Doc(content1);
+            Document document2 = content2Doc(content2);
             VirtualFile file1 = FileDocumentManager.getInstance().getFile(document1);
             VirtualFile file2 = ((FileDocumentContentImpl) content2).getFile();
 
-            String fileName1 = (file1 != null) ? file1.getName() : "Current/Clipboard";
-            String fileName2 = file2.getName();
+            String fileName1 = (file1 != null) ? file1.getName() : null;
+            String fileName2 = (file2 != null) ? file2.getName() : null;
 
             generateAndShowDiff(project, document1, document2, fileName1, fileName2);
         } catch (Exception e) {
-            Document document1 = ((DocumentContent) content1).getDocument();
-            Document document2 = ((DocumentContent) content2).getDocument();
+            Document document1 = content2Doc(content1);
+            Document document2 = content2Doc(content2);
 
-            generateAndShowDiff(project, document1, document2, "Current/Clipboard", "Generated");
+            generateAndShowDiff(project, document1, document2, null, null);
         }
+    }
+
+    private Document content2Doc(DiffContent content) {
+        if (content ==null){
+            return null;
+        }
+        if (content instanceof EmptyContent){
+            return null;
+        }
+
+        return ((DocumentContent) content).getDocument();
     }
 
 
@@ -221,10 +232,8 @@ public class MyDiffAction extends AnAction {
     }
 
     private void generateAndShowSimpleDiffUnified(Project project, Document document1, Document document2, String fileName1, String fileName2) {
-
-
-        List<String> lines1 = Arrays.asList(StringUtil.splitByLinesKeepSeparators(document1.getText()));
-        List<String> lines2 = Arrays.asList(StringUtil.splitByLinesKeepSeparators(document2.getText()));
+        List<String> lines1 = Arrays.asList(StringUtil.splitByLinesKeepSeparators(document1 == null ? "" : document1.getText()));
+        List<String> lines2 = Arrays.asList(StringUtil.splitByLinesKeepSeparators(document2 == null ? "" : document2.getText()));
 
         Patch<String> patch = DiffUtils.diff(lines1, lines2);
         List<String> unifiedDiff = UnifiedDiffUtils.generateUnifiedDiff(fileName1, fileName2, lines1, patch, 0);
@@ -239,8 +248,8 @@ public class MyDiffAction extends AnAction {
     }
 
     private void generateAndShowFullDiffUnified(Project project, Document document1, Document document2, String fileName1, String fileName2) {
-        List<String> lines1 = Arrays.asList(StringUtil.splitByLinesKeepSeparators(document1.getText()));
-        List<String> lines2 = Arrays.asList(StringUtil.splitByLinesKeepSeparators(document2.getText()));
+        List<String> lines1 = Arrays.asList(StringUtil.splitByLinesKeepSeparators(document1 == null ? "" : document1.getText()));
+        List<String> lines2 = Arrays.asList(StringUtil.splitByLinesKeepSeparators(document2 == null ? "" : document2.getText()));
 
         Patch<String> patch = DiffUtils.diff(lines1, lines2);
         List<String> unifiedDiff = UnifiedDiffUtils.generateUnifiedDiff(fileName1, fileName2, lines1, patch, 10000);
