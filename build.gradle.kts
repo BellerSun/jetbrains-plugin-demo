@@ -16,10 +16,15 @@ repositories {
 // Configure Gradle IntelliJ Plugin
 // Read more: https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin.html
 intellij {
-    version.set("2024.1.1")
-    type.set("IU") // Target IDE Platform
+    // 注释掉版本
+    // version.set("2024.1.1")
+   localPath.set("/Applications/CLion 2024.1.6.app/Contents") // 设置本地 IDE 的路径
+    //localPath.set("/Applications/CLion 2020.3.app/Contents") // 设置本地 IDE 的路径
+    // localPath.set("/Applications/CLion 2019.1.4.app/Contents") // 设置本地 IDE 的路径
+    //type.set("CL") // 根据本地 IDE 类型设置，例如 PyCharm Community 是 "IC"（IntelliJ Community）
 
-    plugins.set(listOf("com.intellij.java","maven","terminal"))
+   plugins.set(listOf("terminal","com.intellij.clion","com.intellij.cidr.lang"))
+    // plugins.set(listOf("terminal","com.intellij.cidr.lang"))
 }
 sourceSets {
     main {
@@ -29,8 +34,14 @@ sourceSets {
     }
 }
 
+val pycharmPath by extra("/Applications/CLion 2024.1.6.app")
+//val pycharmPath by extra("/Applications/CLion 2019.1.4.app")
+
 dependencies {
     implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
+
+    implementation(fileTree(mapOf("dir" to "$pycharmPath/Contents/lib", "include" to listOf("**/*.jar"))))
+
     // https://mvnrepository.com/artifact/cn.hutool/hutool-all
     implementation("cn.hutool:hutool-all:5.8.25")
 // lombok

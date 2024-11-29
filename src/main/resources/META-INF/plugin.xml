@@ -22,12 +22,14 @@
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.modules.lang</depends>
     <depends optional="true" config-file="java-plugin.xml">com.intellij.java</depends>
-    <depends>org.jetbrains.idea.maven</depends>
+    <depends optional="true" config-file="py-plugin.xml">com.intellij.modules.python</depends>
+    <depends>com.intellij.modules.cidr.lang</depends> <!-- CLion 的 C/C++ 依赖 -->
+    <depends>com.intellij.modules.clion</depends> <!-- CLion 本身依赖 -->
+
     <depends>org.jetbrains.plugins.terminal</depends>
     <!-- Extension points defined by the plugin.
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
     <extensions defaultExtensionNs="com.intellij">
-        <jvm.exceptionFilter implementation="com.example.demo.filter.MyDebuggerFilter" order="first"/>
 <!--        <codeInsight.declarativeInlayProvider group="settings.hints.group.code.author"
                                               language="JAVA"
                                               isEnabledByDefault="true"
@@ -40,85 +42,22 @@
 <!--        <codeInsight.inlayProviderFactory implementation="com.example.demo.inlay.hints.factory.MyInlayHintsProviderFactory"/>
         <codeInsight.inlayProvider implementationClass="com.example.demo.inlay.hints.left.MyInlayHintsProviderLeft" language="JAVA"/>
         <codeInsight.lineMarkerProvider implementationClass="com.example.demo.marks.MyLineMarkerProvider"/>-->
+        <postStartupActivity implementation="com.example.demo.startup.MyPluginInitializer"/>
+       <!-- <gotoDeclarationHandler implementation="com.example.demo.actions.psi.MyGotoDeclarationHandler" />-->
     </extensions>
+
     <actions>
-        <group id="com.test.baseGroup"
-               class="com.example.demo.actions.MyActionGroupA"
-               icon="MyIcons.logoPng"
-               text="TestGroup"
-               popup="true"
-        >
-            <action id="com.test.baseGroupAction1"
+            <action id="com.test.PyActionFindRefOuter"
                     icon="MyIcons.logo"
-                    text="MyAction11111"
-                    class="com.example.demo.actions.MyAction"
+                    text="查看psi"
+                    class="com.example.demo.actions.psi.CActionFindRefOuter"
                     popup="true"
             >
-            </action>
-
-            <action id="com.test.baseGroupAction2"
-                    icon="MyIcons.logo"
-                    text="MyAction111112222"
-                    class="com.example.demo.actions.MyAction"
-                    popup="true"
-            >
+                <add-to-group group-id="EditorPopupMenu3" anchor="last"/>
             </action>
 
 
-            <action id="com.test.MyActionOpenKeyMapLater"
-                    icon="MyIcons.logo"
-                    text="MyActionOpenKeyMapLater"
-                    class="com.example.demo.actions.MyActionOpenKeyMapLater"
-                    popup="true"
-            >
-            </action>
-
-            <action id="com.test.MyActionInputDialog"
-                    icon="MyIcons.logo"
-                    text="InputDialog"
-                    class="com.example.demo.actions.MyActionInputDialog"
-                    popup="true"
-            >
-            </action>
-
-            <action id="com.test.MyActionLookPath"
-                    icon="MyIcons.logo"
-                    text="打印当前Path"
-                    class="com.example.demo.actions.MyActionLookPath"
-                    popup="true"
-            >
-            </action>
-            <action id="com.test.MyDiffAction"
-                    icon="MyIcons.logo"
-                    text="对比咯"
-                    class="com.example.demo.actions.MyDiffAction"
-                    popup="true"
-            >
-                <add-to-group group-id="Diff.ViewerToolbar" />
-            </action>
-            <action id="com.test.MyActionOpenFileChooser"
-                    icon="MyIcons.logo"
-                    text="openChooser"
-                    class="com.example.demo.actions.MyActionOpenFileChooser"
-                    popup="true"
-            >
-            </action>
-            <action id="com.test.MyActionDetectSelectLang"
-                    icon="MyIcons.logo"
-                    text="检测选中的语言"
-                    class="com.example.demo.actions.MyActionDetectSelectLang"
-                    popup="true"
-            >
-            </action>
-            <action id="com.test.ShowMavenPathAction"
-                    icon="MyIcons.logo"
-                    text="查看mavenHome"
-                    class="com.example.demo.actions.ShowMavenPathAction"
-                    popup="true"
-            >
-            </action>
-
-            <add-to-group group-id="EditorPopupMenu3" anchor="last"/>
-        </group>
     </actions>
+
+
 </idea-plugin>
