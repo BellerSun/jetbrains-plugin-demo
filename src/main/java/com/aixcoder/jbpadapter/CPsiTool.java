@@ -6,6 +6,7 @@ import com.aixcoder.jbpadapter.utils.AixPsiUtils;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -31,6 +32,7 @@ public class CPsiTool extends AixPsiTool<OCFunctionDefinition> {
     public List<OCFunctionDefinition> getUsedMethods(Project project, PsiElement method) {
         final List<UsedIdentifier> usedDefinitions = this.getUsedDefinitionsByType(project, method, UsedType.METHOD);
         return usedDefinitions.stream().map(UsedIdentifier::getPsiElemTo)
+                .map(e -> e instanceof OCFunctionDefinition ? e : e.getParent())
                 .filter(e -> e instanceof OCFunctionDefinition)
                 .map(e -> (OCFunctionDefinition) e)
                 .collect(Collectors.toList());
@@ -72,11 +74,13 @@ public class CPsiTool extends AixPsiTool<OCFunctionDefinition> {
                     for (PsiReference reference : references) {
                         PsiElement resolved = reference.resolve();
                         final PsiFile containingFile;
+                        final VirtualFile vf;
                         if (resolved == null
                             // 确保目标是文件
                             || (containingFile = resolved.getContainingFile()) == null
+                            || (vf = containingFile.getVirtualFile()) == null
                             // 确保文件在当前项目中
-                            || !ProjectRootManager.getInstance(project).getFileIndex().isInContent(containingFile.getVirtualFile())
+                            || !ProjectRootManager.getInstance(project).getFileIndex().isInContent(vf)
                             // 不处理当前文件
                             || containingFile.equals(elem.getContainingFile())
                         ) {
@@ -92,7 +96,8 @@ public class CPsiTool extends AixPsiTool<OCFunctionDefinition> {
                             if (!isHeaderFile(containingFile)) {
                                 // 普通文件，直接返回啦。
                                 PsiElement identifier = findIdentifier(element);
-                                UsedIdentifier usedIdentifier = new UsedIdentifier(identifier, usedType, resolved);
+                                PsiElement identifierTo = findIdentifier(resolved);
+                                UsedIdentifier usedIdentifier = new UsedIdentifier(identifier, usedType, identifierTo);
                                 queue.add(usedIdentifier);
                                 continue;
                             }
@@ -104,7 +109,8 @@ public class CPsiTool extends AixPsiTool<OCFunctionDefinition> {
                             PsiElement extracted = findImplPsi(implFile, resolved);
                             if (extracted != null) {
                                 PsiElement identifier = findIdentifier(element);
-                                UsedIdentifier usedIdentifier = new UsedIdentifier(identifier, usedType, extracted);
+                                PsiElement identifierTo = findIdentifier(extracted);
+                                UsedIdentifier usedIdentifier = new UsedIdentifier(identifier, usedType, identifierTo);
                                 queue.add(usedIdentifier);
                             }
                         }
@@ -117,24 +123,22 @@ public class CPsiTool extends AixPsiTool<OCFunctionDefinition> {
 
     @Override
     public List<UsedIdentifier> getRefDefinitions(Project project, PsiElement elem) {
-        PsiFile psiFile = elem.getContainingFile();
         final LinkedBlockingQueue<UsedIdentifier> queue = new LinkedBlockingQueue<>();
+        GlobalSearchScope searchScope = GlobalSearchScope.projectScope(project);
+        Query<PsiReference> references = ReferencesSearch.search(elem, searchScope);
+        Collection<PsiReference> all = references.findAll();
 
         ApplicationManager.getApplication().runReadAction(() -> {
-            GlobalSearchScope searchScope = GlobalSearchScope.projectScope(project);
-            Query<PsiReference> references = ReferencesSearch.search(elem, searchScope);
-            Collection<PsiReference> all = references.findAll();
+            PsiFile psiFile = elem.getContainingFile();
             for (PsiReference reference : all) {
-                ApplicationManager.getApplication().runReadAction(() -> {
-                    PsiElement referencingElement = reference.getElement();
-                    PsiFile referencingFile = referencingElement.getContainingFile();
-                    if (referencingFile != null && !referencingFile.equals(psiFile)) {
-
-                        PsiElement identifier = findIdentifier(referencingElement);
-                        UsedIdentifier usedIdentifier = new UsedIdentifier(identifier, UsedType.METHOD, elem);
-                        queue.add(usedIdentifier);
-                    }
-                });
+                PsiElement referencingElement = reference.getElement();
+                PsiFile referencingFile = referencingElement.getContainingFile();
+                if (referencingFile != null && !referencingFile.equals(psiFile)) {
+                    PsiElement identifier = findIdentifier(referencingElement);
+                    PsiElement identifierTo = findIdentifier(elem);
+                    UsedIdentifier usedIdentifier = new UsedIdentifier(identifier, UsedType.METHOD, identifierTo);
+                    queue.add(usedIdentifier);
+                }
             }
         });
         return new ArrayList<>(queue);
@@ -149,8 +153,8 @@ public class CPsiTool extends AixPsiTool<OCFunctionDefinition> {
         final String name = symbolKind.getName();
         switch (name) {
             case "Struct":
-            case "Constructor":
                 return UsedType.CLASS;
+            case "Constructor":
             case "Function":
                 return UsedType.METHOD;
             default:
@@ -227,7 +231,6 @@ public class CPsiTool extends AixPsiTool<OCFunctionDefinition> {
         if (headerParams == null || implParams == null) {
             return false;
         }
-
         List<String> headerParamTypes = headerParams.getParameters().stream()
                 .map(param -> param.getType().toString())
                 .collect(Collectors.toList());
@@ -240,11 +243,21 @@ public class CPsiTool extends AixPsiTool<OCFunctionDefinition> {
     }
 
 
-    private PsiElement findIdentifier(PsiElement parent){
-        for (@NotNull PsiElement child : parent.getChildren()) {
+    private PsiElement findIdentifier(PsiElement parent) {
+        String identifier = "IDENTIFIER";
+        PsiElement child = parent.getFirstChild();
+        while (child != null) {
             String type = AixPsiUtils.getType(child);
-            System.out.println(type + ":"+parent.getText());
+            if (identifier.equals(type)) {
+                return child;
+            }
+            child = child.getNextSibling();
         }
+
+        if (parent instanceof OCFunctionDefinition && ((OCFunctionDefinition) parent).getDeclarator() != null) {
+            return ((OCFunctionDefinition) parent).getDeclarator().getIdentifyingElement();
+        }
+
         return parent;
     }
 }

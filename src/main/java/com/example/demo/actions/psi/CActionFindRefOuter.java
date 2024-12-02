@@ -124,7 +124,7 @@ public class CActionFindRefOuter extends AnAction {
         PsiElement psiElemTo = usedIdentifier.getPsiElemTo();
         UsedType usedType = usedIdentifier.getUsedType();
 
-        System.out.println("[DEBUG] 引用信息[" + psiFileFrom.getName() + "][ " + psiElemFrom.getText() + psiElemFrom.getTextRange().toString() + "]==>[" + psiFileTo.getName() + "][" + psiElemTo.getTextRange().toString() + "], 引用类型: " + usedType);
+        System.out.println("[DEBUG] 引用信息[" + psiFileFrom.getName() + "][ " + psiElemFrom.getText() + psiElemFrom.getTextRange().toString() + "]==>[" + psiFileTo.getName() + "][" + psiElemTo.getText().toString() + "], 引用类型: " + usedType);
     }
 
 
