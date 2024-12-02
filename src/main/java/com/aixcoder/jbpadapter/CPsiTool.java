@@ -6,6 +6,7 @@ import com.aixcoder.jbpadapter.utils.AixPsiUtils;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -40,7 +41,12 @@ public class CPsiTool extends AixPsiTool<OCFunctionDefinition> {
 
     @Override
     public boolean isTestCase(OCFunctionDefinition definition) {
-        return "TestBody".equals(definition.getName()) && definition.getDeclarator() != null && definition.getDeclarator().getText().isEmpty();
+        final String fileContent;
+        return ("TestBody".equals(definition.getName()) && definition.getDeclarator() != null && definition.getDeclarator().getText().isEmpty())
+               || (null != (fileContent = ApplicationManager.getApplication().runReadAction((Computable<PsiFile>) definition::getContainingFile).getText())
+                   && fileContent.contains("CPPUNIT_TEST(" + definition.getName() + ")")
+               )
+                ;
     }
 
     @Override
